@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎯 دبابة الدفاع - تحرك عرضي فقط</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FF4757;
+            --secondary: #3742FA;
+            --accent: #FFA502;
+            --dark: #2F3542;
+            --light: #FFFFFF;
+            --success: #2ED573;
+            --danger: #FF4757;
+            --warning: #FFA502;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            direction: rtl;
+        }
+        
+        /* شاشة البداية */
+        .start-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0c2461, #1e3799);
+            z-index: 100;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .game-title {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .game-subtitle {
+            font-size: 1.2rem;
+            color: #FFD700;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        
+        .instructions-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 30px 0;
+            max-width: 500px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .instructions-title {
+            color: #FFD700;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .instructions-list {
+            list-style: none;
+            text-align: right;
+        }
+        
+        .instructions-list li {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions-list i {
+            color: #FFA500;
+            width: 30px;
+            text-align: center;
+        }
+        
+        .start-button {
+            background: linear-gradient(45deg, #FF4757, #FF6B81);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 20px 50px;
+            cursor: pointer;
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(255, 71, 87, 0.4);
+        }
+        
+        .start-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(255, 71, 87, 0.6);
+        }
+        
+        /* منطقة اللعبة */
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: none;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #1e3c72 0%, #2a5298 30%, #4a69bd 100%);
+        }
+        
+        /* واجهة اللعبة */
+        .game-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .top-bar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 15px 25px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .score-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .score-label {
+            font-size: 0.9rem;
+            color: #FFD700;
+            margin-bottom: 5px;
+        }
+        
+        .score-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 10px #FFD700;
+        }
+        
+        .health-bar-container {
+            width: 200px;
+            height: 25px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .health-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #FF4757, #FFA502, #2ED573);
+            width: 100%;
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        
+        .level-display {
+            font-size: 1.2rem;
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        /* عناصر التحكم */
+        .controls-container {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 0 20px;
+        }
+        
+        .movement-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .control-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: all;
+            transition: all 0.1s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .control-button:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.95);
+            border-color: #FFD700;
+        }
+        
+        .fire-button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF4757, #FF6B81);
+            border: none;
+            color: white;
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: all;
+            box-shadow: 0 10px 20px rgba(255, 71, 87, 0.4);
+            transition: all 0.1s;
+        }
+        
+        .fire-button:active {
+            transform: scale(0.9);
+            box-shadow: 0 5px 10px rgba(255, 71, 87, 0.6);
+        }
+        
+        /* رسائل اللعبة */
+        .game-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            border: 3px solid #FFD700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            z-index: 50;
+            display: none;
+        }
+        
+        .message-title {
+            font-size: 2.5rem;
+            color: #FFD700;
+            margin-bottom: 20px;
+        }
+        
+        .message-text {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .message-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .message-btn {
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .restart-btn {
+            background: linear-gradient(45deg, #2ED573, #1DD1A1);
+            color: white;
+        }
+        
+        .menu-btn {
+            background: linear-gradient(45deg, #3742FA, #5352ED);
+            color: white;
+        }
+        
+        /* رسومات ديناميكية */
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        /* تأثيرات الجوال */
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 2.2rem;
+            }
+            
+            .control-button {
+                width: 70px;
+                height: 70px;
+                font-size: 1.8rem;
+            }
+            
+            .fire-button {
+                width: 90px;
+                height: 90px;
+                font-size: 2.2rem;
+            }
+            
+            .health-bar-container {
+                width: 150px;
+            }
+            
+            .controls-container {
+                gap: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .game-title {
+                font-size: 1.8rem;
+            }
+            
+            .control-button {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .fire-button {
+                width: 80px;
+                height: 80px;
+                font-size: 2rem;
+            }
+            
+            .controls-container {
+                justify-content: space-between;
+                gap: 10px;
+            }
+            
+            .top-bar {
+                padding: 10px 15px;
+            }
+        }
+        
+        /* تحسينات اللمس */
+        .touch-area {
+            position: absolute;
+            bottom: 120px;
+            left: 20px;
+            right: 20px;
+            height: 150px;
+            pointer-events: all;
+            z-index: 5;
+            display: none;
+        }
+        
+        .touch-left, .touch-right {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+        }
+        
+        .touch-left {
+            left: 0;
+        }
+        
+        .touch-right {
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- شاشة البداية -->
+    <div class="start-screen" id="startScreen">
+        <h1 class="game-title">🎯 دبابة الدفاع</h1>
+        <p class="game-subtitle">تحرك عرضي فقط - دافع عن موقعك!</p>
+        
+        <div class="instructions-box">
+            <h3 class="instructions-title">🎮 كيفية اللعب:</h3>
+            <ul class="instructions-list">
+                <li>
+                    <i class="fas fa-arrow-right"></i>
+                    <span>تحرك يميناً ويساراً فقط باستخدام الأسفلتين</span>
+                </li>
+                <li>
+                    <i class="fas fa-bullseye"></i>
+                    <span>اضغط زر النار لإطلاق الصواريخ</span>
+                </li>
+                <li>
+                    <i class="fas fa-shield-alt"></i>
+                    <span>تجنب صواريخ الأعداء للحفاظ على صحتك</span>
+                </li>
+                <li>
+                    <i class="fas fa-trophy"></i>
+                    <span>أبعد صواريخ الأعداء لتحصل على نقاط</span>
+                </li>
+                <li>
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>يمكنك أيضاً السحب على الشاشة للتحرك</span>
+                </li>
+            </ul>
+        </div>
+        
+        <button class="start-button" id="startButton">
+            <i class="fas fa-play-circle"></i>
+            <span>بدء اللعبة</span>
+        </button>
+    </div>
+    
+    <!-- منطقة اللعبة -->
+    <div class="game-container" id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- النجوم المتحركة -->
+        <div class="stars" id="starsContainer"></div>
+        
+        <!-- واجهة اللعبة -->
+        <div class="game-ui">
+            <div class="top-bar">
+                <div class="score-display">
+                    <div class="score-label">النقاط</div>
+                    <div class="score-value" id="scoreValue">0</div>
+                </div>
+                
+                <div class="health-display">
+                    <div class="score-label">الصحة</div>
+                    <div class="health-bar-container">
+                        <div class="health-bar" id="healthBar"></div>
+                    </div>
+                </div>
+                
+                <div class="score-display">
+                    <div class="score-label">المستوى</div>
+                    <div class="level-display" id="levelValue">1</div>
+                </div>
+            </div>
+            
+            <!-- منطقة لمس للتحكم بالسحب -->
+            <div class="touch-area" id="touchArea">
+                <div class="touch-left" data-direction="left"></div>
+                <div class="touch-right" data-direction="right"></div>
+            </div>
+            
+            <!-- عناصر التحكم -->
+            <div class="controls-container">
+                <div class="movement-controls">
+                    <button class="control-button" id="leftButton">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    
+                    <button class="control-button" id="rightButton">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </div>
+                
+                <button class="fire-button" id="fireButton">
+                    <i class="fas fa-bullseye"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- رسائل اللعبة -->
+        <div class="game-message" id="gameMessage">
+            <h2 class="message-title" id="messageTitle">🎉 تهانينا!</h2>
+            <p class="message-text" id="messageText">لقد حصلت على 1000 نقطة!</p>
+            <div class="message-buttons">
+                <button class="message-btn restart-btn" id="restartButton">إعادة اللعب</button>
+                <button class="message-btn menu-btn" id="menuButton">القائمة الرئيسية</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ملفات JavaScript -->
+    <script src="game.js"></script>
+    <script src="audio.js"></script>
+</body>
+</html>
